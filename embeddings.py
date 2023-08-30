@@ -36,7 +36,7 @@ from langchain.prompts import PromptTemplate
 
 os.environ["OPENAI_API_KEY"] = 'YOUR_KEY'
 
-openai.api_key = 'YOUR_KEY' # Setting your API key
+openai.api_key = 'YOUR_KEY'
 
 llm = ChatOpenAI(temperature=0, model_name="gpt-3.5-turbo") # Setting your OpenAI model
 
@@ -50,45 +50,44 @@ for g1 in range(len(gfiles)): # Iterating through every document
 
     f.close()
 
-  
+    content = ""
 
-content = ""
-
-with open(f"{gfiles[g1]}", 'r') as file: # Storing the document contents
-    content += file.read()
-    content +=  "\n\n"
+    with open(f"{gfiles[g1]}", 'r') as file: # Storing the document contents
+        content += file.read()
+        content +=  "\n\n"
 
 
-text_splitter = RecursiveCharacterTextSplitter(separators=["\n\n", "\n"], chunk_size=2000, chunk_overlap=250)
-texts = text_splitter.split_text(content) # Splitting the document content into chunks
+    text_splitter = RecursiveCharacterTextSplitter(separators=["\n\n", "\n"], chunk_size=2000, chunk_overlap=250)
+    texts = text_splitter.split_text(content) # Splitting the document content into chunks
 
 
-def get_embedding(text, model="text-embedding-ada-002"): # Defining the function that creates the embeddings needed for the Chatbot to function (It can't form answers from plain text)
-    text = text.replace("\n", " ")
-    return openai.Embedding.create(input  = [text], model=model)['data'][0]['embedding']
+    def get_embedding(text, model="text-embedding-ada-002"): # Defining the function that creates the embeddings needed for the Chatbot to function (It can't form answers from plain text)
+        text = text.replace("\n", " ")
+        return openai.Embedding.create(input  = [text], model=model)['data'][0]['embedding']
 
 
-df = pandas.read_csv(f"embs{g1}.csv") # Reading the empty csv file that you created earlier for storing the embeddings
-df["combined"] = texts # Filling the 'combined' collumn with the chunks you created earlier
+    df = pandas.read_csv(f"embs{g1}.csv") # Reading the empty csv file that you created earlier for storing the embeddings
+    df["combined"] = texts # Filling the 'combined' collumn with the chunks you created earlier
 
-for i4 in range(len(df["combined"])):
-    df["combined"][i4] =  '""'  + df["combined"][i4].replace("\n", "") +  '""'  # Adding triple quotes around the text chunks to prevent syntax errors caused by double quotes in the text
+    for i4 in range(len(df["combined"])):
+        df["combined"][i4] =  '""'  + df["combined"][i4].replace("\n", "") +  '""'  # Adding triple quotes around the text chunks to prevent syntax errors caused by double quotes in the text
 
-df.to_csv(f"embs{g1}.csv") # Writing the data to the csv file
+    df.to_csv(f"embs{g1}.csv") # Writing the data to the csv file
 
-df["embedding"] = df.combined.apply(lambda  x: get_embedding(x)) # Adding and filling the 'embedding' collumn which contains the embeddings created from your text chunks
+    df["embedding"] = df.combined.apply(lambda  x: get_embedding(x)) # Adding and filling the 'embedding' collumn which contains the embeddings created from your text chunks
 
-df.to_csv(f"embs{g1}.csv", index=False) # Writing the new 'embedding' collumn to the csv file
-df = pandas.read_csv(f"embs{g1}.csv") # Reading the new csv file
-embs = []
+    df.to_csv(f"embs{g1}.csv", index=False) # Writing the new 'embedding' collumn to the csv file
+    df = pandas.read_csv(f"embs{g1}.csv") # Reading the new csv file
+    embs = []
 
-for r1 in range(len(df.embedding)): # Making the embeddings readable to the chatbot by turning them into lists
-    e1 = df.embedding[r1].split(",")
-    for ei2 in range(len(e1)):
-        e1[ei2] = float(e1[ei2].strip().replace("[", "").replace("]", ""))
-    embs.append(e1)
+    for r1 in range(len(df.embedding)): # Making the embeddings readable to the chatbot by turning them into lists
+        e1 = df.embedding[r1].split(",")
+        for ei2 in range(len(e1)):
+            e1[ei2] = float(e1[ei2].strip().replace("[", "").replace("]", ""))
+        embs.append(e1)
 
 
-df["embedding"] = embs # Updating the 'embedding' collumn
+    df["embedding"] = embs # Updating the 'embedding' collumn
 
-df.to_csv(f"embs{g1}.csv", index=False) # Writing the final version of the csv file
+    df.to_csv(f"embs{g1}.csv", index=False) # Writing the final version of the csv file
+
